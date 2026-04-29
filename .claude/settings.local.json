@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(extract-text \"C:\\\\Users\\\\30918\\\\Desktop\\\\产品需求文档.docx\")",
+      "Bash(pandoc \"C:\\\\Users\\\\30918\\\\Desktop\\\\产品需求文档.docx\" -t markdown)",
+      "Bash(mkdir \"C:\\\\Users\\\\30918\\\\Desktop\\\\JIARUI TECH PROJECT\\\\frontend\\\\app\\\\[locale]\\\\community\\\\posts\")",
+      "Bash(mkdir \"C:\\\\Users\\\\30918\\\\Desktop\\\\JIARUI TECH PROJECT\\\\frontend\\\\app\\\\[locale]\\\\community\\\\posts\\\\new\")",
+      "Bash(mkdir \"C:\\\\Users\\\\30918\\\\Desktop\\\\JIARUI TECH PROJECT\\\\frontend\\\\app\\\\[locale]\\\\community\\\\users\")",
+      "Bash(mkdir \"C:\\\\Users\\\\30918\\\\Desktop\\\\JIARUI TECH PROJECT\\\\frontend\\\\app\\\\[locale]\\\\community\\\\users\\\\[username]\")",
+      "Bash(venv\\\\Scripts\\\\python.exe -c \"from app.main import app; print\\('OK - imports work'\\)\")",
+      "Bash(./venv/Scripts/python.exe -c \"from app.main import app; print\\('OK - imports work'\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(./venv/Scripts/python.exe -c ' *)",
+      "Bash(./venv/Scripts/python.exe -c \"from app.main import app; print\\('Backend OK'\\)\")",
+      "Bash(xargs grep *)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(python -c \"import secrets; print\\(secrets.token_urlsafe\\(48\\)\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app.py', encoding='utf-8'\\).read\\(\\)\\); print\\('SYNTAX_OK'\\)\")",
+      "Bash(python -c \"import customtkinter, anthropic, trafilatura, dotenv; print\\('DEPS_OK'\\)\")",
+      "Bash(mv \"/c/Users/30918/Desktop/JIARUI TECH PROJECT/news_fetcher\" \"/c/Users/30918/Desktop/JIARUI智能新闻加工\")",
+      "Read(//c/Users/30918/Desktop/**)",
+      "PowerShell(New-Item -ItemType Directory -Path \"C:\\\\Users\\\\30918\\\\Desktop\\\\JIARUI TECH PROJECT\\\\frontend\\\\public\" -Force)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('C:/Users/30918/Desktop/JIARUI智能新闻加工/app.py', encoding='utf-8'\\).read\\(\\)\\); print\\('SYNTAX_OK'\\)\")",
+      "Bash(mkdir -p \"C:/Users/30918/Desktop/自动抓取\")",
+      "Bash(mv \"C:/Users/30918/Desktop/JIARUI TECH PROJECT/自动抓取/AutoNewsGen\" \"C:/Users/30918/Desktop/自动抓取/AutoNewsGen\")",
+      "Bash(.\\\\.venv\\\\Scripts\\\\python.exe -c \"from app.services.llm import complete_chat; print\\('complete_chat imported OK'\\)\")",
+      "Bash(\"/c/Users/30918/Desktop/JIARUI TECH PROJECT/backend/venv/Scripts/pip.exe\" install trafilatura)",
+      "Bash(\"/c/Users/30918/Desktop/JIARUI TECH PROJECT/backend/venv/Scripts/python.exe\" -c \"import trafilatura; help\\(trafilatura.extract_metadata\\)\")",
+      "Bash(\"/c/Users/30918/Desktop/JIARUI TECH PROJECT/backend/venv/Scripts/python.exe\" -c \"import trafilatura; print\\(trafilatura.__version__\\)\")",
+      "Bash(\"/c/Users/30918/Desktop/JIARUI TECH PROJECT/backend/venv/Scripts/python.exe\" -c \"import trafilatura; help\\(trafilatura.extract\\)\")",
+      "Bash(\"/c/Users/30918/Desktop/JIARUI TECH PROJECT/backend/venv/Scripts/python.exe\" -m py_compile \"C:/Users/30918/Desktop/JIARUI TECH PROJECT/backend/app/services/article_processor.py\")",
+      "Bash(\"/c/Users/30918/Desktop/JIARUI TECH PROJECT/backend/venv/Scripts/python.exe\" -m py_compile \"C:/Users/30918/Desktop/JIARUI TECH PROJECT/backend/app/routers/admin.py\")",
+      "Bash(curl -s -X POST http://localhost:8000/api/admin/process-url -H 'Content-Type: application/json' -d '{\"url\":\"https://test.com\"}' -w '\\\\nHTTP_STATUS:%{http_code}')",
+      "Bash(.\\\\venv\\\\Scripts\\\\python.exe -c \"import trafilatura; print\\('trafilatura', trafilatura.__version__\\); import httpx; print\\('httpx', httpx.__version__\\)\")",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\30918\\\\Desktop\\\\JIARUI TECH PROJECT\\\\frontend\\\\app\\\\api\\\\admin\\\\process-url\")",
+      "Bash(npm install *)",
+      "Bash(npm run *)"
+    ]
+  }
+}

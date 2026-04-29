@@ -1,0 +1,80 @@
+version: "3.9"
+
+# ═══════════════════════════════════════════════════════════
+#  JIARUI TECH — Production Docker Compose
+#  用法: docker compose -f docker-compose.prod.yml up -d
+# ═══════════════════════════════════════════════════════════
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: jiarui_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jiarui
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: jiarui_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jiarui -d jiarui_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: jiarui_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend (FastAPI) ──────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jiarui_backend
+    restart: unless-stopped
+    env_file: ./backend/.env.production
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+  # ── Frontend (Next.js) ─────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://jiarui_backend:8000
+        NEXT_PUBLIC_SITE_NAME: JIARUI TECH
+    container_name: jiarui_frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://jiarui_backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

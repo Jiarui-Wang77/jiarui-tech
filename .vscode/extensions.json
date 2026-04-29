@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.debugpy",
+    "ms-python.black-formatter",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "ms-azuretools.vscode-docker",
+    "formulahendry.auto-rename-tag",
+    "Christian-Kohler.path-intellisense"
+  ]
+}

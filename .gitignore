@@ -1,0 +1,27 @@
+# ── 环境变量（含密钥，绝对不能提交）─────────────────────
+backend/.env
+backend/.env.production
+frontend/.env.local
+frontend/.env.production
+.env
+.env.*
+
+# ── Python ──────────────────────────────────────────────
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ── Node.js ─────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# ── Docker ──────────────────────────────────────────────
+# docker-compose.prod.yml 不包含密钥，可以提交
+
+# ── OS ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
