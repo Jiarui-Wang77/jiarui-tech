@@ -10,7 +10,15 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== "undefined" && !window.location.pathname.includes("/auth/")) {
+      const url: string = error.config?.url ?? "";
+      // /auth/me is a background login-status check — silently fail, never redirect.
+      // Only redirect when the user actively calls a protected mutation endpoint.
+      const isAuthCheck = url === "/auth/me" || url.endsWith("/auth/me");
+      if (
+        !isAuthCheck &&
+        typeof window !== "undefined" &&
+        !window.location.pathname.includes("/auth/")
+      ) {
         window.location.href = `/${window.location.pathname.split("/")[1]}/auth/login`;
       }
     }
