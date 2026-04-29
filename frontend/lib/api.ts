@@ -19,7 +19,9 @@ api.interceptors.response.use(
         typeof window !== "undefined" &&
         !window.location.pathname.includes("/auth/")
       ) {
-        window.location.href = `/${window.location.pathname.split("/")[1]}/auth/login`;
+        const firstSegment = window.location.pathname.split("/")[1];
+        const locale = ["zh", "en"].includes(firstSegment) ? firstSegment : "zh";
+        window.location.href = `/${locale}/auth/login`;
       }
     }
     return Promise.reject(error);
