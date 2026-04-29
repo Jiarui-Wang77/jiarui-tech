@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     # Anthropic Claude — used for AI post generation (complete_chat)
     CLAUDE_API_KEY: str = ""
-    CLAUDE_MODEL: str = "claude-sonnet-4-6"
+    CLAUDE_MODEL: str = "claude-3-5-haiku-20241022"
 
     @property
     def allowed_origins_list(self) -> list[str]:

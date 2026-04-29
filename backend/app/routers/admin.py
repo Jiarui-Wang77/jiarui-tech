@@ -446,8 +446,12 @@ async def test_llm_connection(
         except Exception as e:
             result["claude"] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
 
-    # Overall ok = Claude works (DeepSeek is for Juno, separate concern)
-    result["ok"] = result.get("claude", {}).get("ok", False)
+    # Flatten Claude result to top level so frontend can read ok/model/reply/error directly
+    claude = result.get("claude", {})
+    result["ok"]    = claude.get("ok", False)
+    result["model"] = claude.get("model", settings.CLAUDE_MODEL)
+    result["reply"] = claude.get("reply")
+    result["error"] = claude.get("error")
     return result
 
 
