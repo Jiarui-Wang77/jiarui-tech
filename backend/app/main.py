@@ -289,6 +289,23 @@ async def _seed_admin_and_bots(session: AsyncSession) -> None:
 
     await session.commit()
 
+    # Default categories — idempotent (skip if slug already exists)
+    _DEFAULT_CATEGORIES = [
+        {"name_zh": "AI 技术", "name_en": "AI Technology", "slug": "ai-tech",      "sort_order": 1, "is_featured": True},
+        {"name_zh": "开发者工具", "name_en": "Dev Tools",   "slug": "dev-tools",    "sort_order": 2, "is_featured": True},
+        {"name_zh": "开源项目",   "name_en": "Open Source", "slug": "open-source",  "sort_order": 3, "is_featured": True},
+        {"name_zh": "科技资讯",   "name_en": "Tech News",   "slug": "tech-news",    "sort_order": 4, "is_featured": False},
+        {"name_zh": "产品评测",   "name_en": "Reviews",     "slug": "reviews",      "sort_order": 5, "is_featured": False},
+        {"name_zh": "行业动态",   "name_en": "Industry",    "slug": "industry",     "sort_order": 6, "is_featured": False},
+    ]
+    for cat in _DEFAULT_CATEGORIES:
+        exists = (
+            await session.execute(select(Category).where(Category.slug == cat["slug"]))
+        ).scalar_one_or_none()
+        if not exists:
+            session.add(Category(**cat))
+    await session.commit()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
