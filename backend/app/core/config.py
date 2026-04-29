@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     def allowed_origins_list(self) -> list[str]:
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",")]
 
+    # Set True only after HTTPS / SSL certificate is configured on the server.
+    # Secure cookies are NOT sent over plain HTTP — keep False until SSL is ready.
+    COOKIE_SECURE: bool = False
+
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"

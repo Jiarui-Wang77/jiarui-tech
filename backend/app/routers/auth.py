@@ -18,7 +18,7 @@ _REFRESH_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400
 
 
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    secure = settings.is_production
+    secure = settings.COOKIE_SECURE  # False until HTTPS is configured
     response.set_cookie(
         key="access_token",
         value=access_token,
