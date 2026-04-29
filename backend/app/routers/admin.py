@@ -430,9 +430,9 @@ async def test_llm_connection(
     from app.core.config import settings
     result: dict[str, Any] = {}
 
-    # ── Test DeepSeek complete_chat (post generation & article processing) ────
-    if not settings.LLM_API_KEY:
-        result["generation"] = {"ok": False, "error": "LLM_API_KEY (DeepSeek) 未配置"}
+    # ── Test Qwen complete_chat (post generation & article processing) ────────
+    if not settings.QWEN_API_KEY:
+        result["generation"] = {"ok": False, "error": "QWEN_API_KEY 未配置，请添加到 backend/.env.production"}
     else:
         try:
             reply = await complete_chat(
@@ -440,16 +440,16 @@ async def test_llm_connection(
                 temperature=0.0,
                 max_tokens=10,
             )
-            result["generation"] = {"ok": True, "reply": reply, "model": settings.LLM_MODEL}
+            result["generation"] = {"ok": True, "reply": reply, "model": settings.QWEN_MODEL}
         except LLMError as e:
-            result["generation"] = {"ok": False, "error": str(e), "model": settings.LLM_MODEL}
+            result["generation"] = {"ok": False, "error": str(e), "model": settings.QWEN_MODEL}
         except Exception as e:
             result["generation"] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
 
     # Flatten to top level so frontend can read ok/model/reply/error directly
     gen = result.get("generation", {})
     result["ok"]    = gen.get("ok", False)
-    result["model"] = gen.get("model", settings.LLM_MODEL)
+    result["model"] = gen.get("model", settings.QWEN_MODEL)
     result["reply"] = gen.get("reply")
     result["error"] = gen.get("error")
     return result

@@ -28,8 +28,9 @@ class Settings(BaseSettings):
     LLM_MAX_HISTORY_TURNS: int = 20  # how many prior turns to send as context
 
     # Anthropic Claude — used for AI post generation (complete_chat)
-    CLAUDE_API_KEY: str = ""
-    CLAUDE_MODEL: str = "claude-3-5-haiku-20241022"
+    # Qwen (DashScope) — used for AI post generation & article processing
+    QWEN_API_KEY: str = ""
+    QWEN_MODEL: str = "qwen3-plus"          # DashScope model ID for Qwen3 Plus
 
     @property
     def allowed_origins_list(self) -> list[str]:

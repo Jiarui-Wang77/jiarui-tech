@@ -127,10 +127,13 @@ async def stream_chat_completion(
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  PROVIDER 2 — DeepSeek non-streaming  (for AI post generation & article processing)
-#  (Originally used Claude, but Anthropic API returns 403 from HK servers.
-#   DeepSeek is OpenAI-compatible and works reliably from this region.)
+#  PROVIDER 2 — Qwen (DashScope, OpenAI-compatible)
+#  Used for: AI post generation & article URL processing
+#  Model: Qwen3-Plus  |  Base URL: dashscope.aliyuncs.com/compatible-mode/v1
 # ═══════════════════════════════════════════════════════════════════════════════
+
+_QWEN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
 
 async def complete_chat(
     messages: list[dict[str, str]],
@@ -138,32 +141,25 @@ async def complete_chat(
     temperature: float = 0.7,
     max_tokens: int = 800,
 ) -> str:
-    """Non-streaming DeepSeek request — used for AI community post & article generation.
+    """Non-streaming Qwen request — AI post generation & article processing.
 
-    Args:
-        messages:    [{"role": "system"|"user"|"assistant", "content": "..."}]
-        temperature: 0.0 – 1.0
-        max_tokens:  upper bound on response length
-
-    Returns:
-        The assistant message text as a plain string.
-
-    Raises:
-        LLMError: on any network or API error.
+    Uses DashScope OpenAI-compatible endpoint with Qwen3-Plus.
+    Thinking mode is disabled for faster content generation.
     """
-    if not settings.LLM_API_KEY:
-        raise LLMError("LLM_API_KEY (DeepSeek) not configured. Add it to backend/.env")
+    if not settings.QWEN_API_KEY:
+        raise LLMError("QWEN_API_KEY 未配置，请在服务器 backend/.env.production 中添加")
 
-    url = f"{settings.LLM_BASE_URL.rstrip('/')}/chat/completions"
-    payload = {
-        "model":       settings.LLM_MODEL,
-        "messages":    messages,
-        "temperature": temperature,
-        "max_tokens":  max_tokens,
-        "stream":      False,
+    url = f"{_QWEN_BASE_URL}/chat/completions"
+    payload: dict = {
+        "model":           settings.QWEN_MODEL,
+        "messages":        messages,
+        "temperature":     temperature,
+        "max_tokens":      max_tokens,
+        "stream":          False,
+        "enable_thinking": False,   # Qwen3 thinking off — faster for generation
     }
     headers = {
-        "Authorization": f"Bearer {settings.LLM_API_KEY}",
+        "Authorization": f"Bearer {settings.QWEN_API_KEY}",
         "Content-Type":  "application/json",
     }
     timeout = httpx.Timeout(connect=10.0, read=120.0, write=10.0, pool=5.0)
@@ -177,32 +173,27 @@ async def complete_chat(
             if resp.status_code == 429:
                 if attempt < _MAX_RETRIES:
                     wait = 2.0 * (attempt + 1)
-                    _log.warning(
-                        "DeepSeek rate-limited (429), retrying in %.0fs (attempt %d/%d)",
-                        wait, attempt + 1, _MAX_RETRIES,
-                    )
+                    _log.warning("Qwen rate-limited, retrying in %.0fs (attempt %d/%d)",
+                                 wait, attempt + 1, _MAX_RETRIES)
                     await asyncio.sleep(wait)
                     continue
-                raise LLMError("DeepSeek API 请求频率超限（429），请稍后重试")
+                raise LLMError("Qwen API 请求频率超限（429），请稍后重试")
 
             if resp.status_code != 200:
-                _log.error("DeepSeek complete_chat error %d: %s", resp.status_code, resp.text[:500])
-                raise LLMError(
-                    f"DeepSeek returned {resp.status_code}: {resp.text[:300]}"
-                )
+                _log.error("Qwen complete_chat error %d: %s", resp.status_code, resp.text[:500])
+                raise LLMError(f"Qwen returned {resp.status_code}: {resp.text[:300]}")
 
             data = resp.json()
-            # OpenAI-compatible response: {"choices": [{"message": {"content": "..."}}]}
             choices = data.get("choices") or []
             if not choices:
-                raise LLMError("DeepSeek returned empty choices")
+                raise LLMError("Qwen returned empty choices")
             text = choices[0].get("message", {}).get("content", "")
             return text.strip()
 
         except LLMError:
             raise
         except httpx.TimeoutException as e:
-            raise LLMError("DeepSeek 响应超时，请重试") from e
+            raise LLMError("Qwen 响应超时，请重试") from e
         except httpx.HTTPError as e:
             raise LLMError(f"网络错误：{e}") from e
 
