@@ -30,7 +30,10 @@ export default function AdminDashboard() {
   const locale = useLocale();
   const isZh = locale === "zh";
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
+  // Wait for Zustand localStorage hydration before auth-guarding
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [posts, setPosts] = useState<AdminPostItem[]>([]);
@@ -60,14 +63,11 @@ export default function AdminDashboard() {
 
   // ── Auth guard ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (user === null) {
-      router.replace(`/${locale}`);
-      return;
-    }
-    if (user && user.role !== "admin") {
+    if (!mounted || isLoading) return; // wait for hydration
+    if (!user || user.role !== "admin") {
       router.replace(`/${locale}`);
     }
-  }, [user, locale, router]);
+  }, [user, isLoading, mounted, locale, router]);
 
   // ── Load stats ──────────────────────────────────────────────────────────
   const loadStats = async () => {
@@ -201,8 +201,12 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!user || user.role !== "admin") {
-    return null;
+  if (!mounted || isLoading || !user || user.role !== "admin") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   const formatDate = (iso: string) =>

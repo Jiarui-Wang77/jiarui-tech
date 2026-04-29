@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,15 +20,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, setUser, isLoading } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  // Wait for client-side Zustand localStorage hydration before checking auth
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (!isLoading && user && user.role !== "admin") {
+    if (!mounted || isLoading) return; // not ready yet
+    if (user && user.role !== "admin") {
       router.replace("/");
     }
-    if (!isLoading && !user) {
+    if (!user) {
       router.replace("/zh/auth/login");
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, mounted, router]);
 
   const handleLogout = async () => {
     await authApi.logout();
@@ -36,7 +40,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/");
   };
 
-  if (isLoading || !user) {
+  // Show spinner until mounted + auth resolved
+  if (!mounted || isLoading || !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
