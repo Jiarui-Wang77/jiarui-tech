@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,22 +17,16 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, setUser, isLoading } = useAuthStore();
+  const { user, setUser, isLoading, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
-  // Wait for client-side Zustand localStorage hydration before checking auth
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (!mounted || isLoading) return; // not ready yet
-    if (user && user.role !== "admin") {
-      router.replace("/");
-    }
-    if (!user) {
-      router.replace("/zh/auth/login");
-    }
-  }, [user, isLoading, mounted, router]);
+    // Only redirect after Zustand has read localStorage AND auth check is done
+    if (!_hasHydrated || isLoading) return;
+    if (user && user.role !== "admin") router.replace("/");
+    if (!user) router.replace("/zh/auth/login");
+  }, [user, isLoading, _hasHydrated, router]);
 
   const handleLogout = async () => {
     await authApi.logout();
@@ -40,8 +34,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/");
   };
 
-  // Show spinner until mounted + auth resolved
-  if (!mounted || isLoading || !user) {
+  // Show spinner until localStorage hydration + auth check is complete
+  if (!_hasHydrated || isLoading || !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
