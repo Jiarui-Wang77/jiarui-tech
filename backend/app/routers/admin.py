@@ -430,9 +430,9 @@ async def test_llm_connection(
     from app.core.config import settings
     result: dict[str, Any] = {}
 
-    # ── Test Claude (post generation) ─────────────────────────────────
-    if not settings.CLAUDE_API_KEY or settings.CLAUDE_API_KEY == "YOUR_ANTHROPIC_API_KEY_HERE":
-        result["claude"] = {"ok": False, "error": "CLAUDE_API_KEY 未配置，请填入 backend/.env"}
+    # ── Test DeepSeek complete_chat (post generation & article processing) ────
+    if not settings.LLM_API_KEY:
+        result["generation"] = {"ok": False, "error": "LLM_API_KEY (DeepSeek) 未配置"}
     else:
         try:
             reply = await complete_chat(
@@ -440,18 +440,18 @@ async def test_llm_connection(
                 temperature=0.0,
                 max_tokens=10,
             )
-            result["claude"] = {"ok": True, "reply": reply, "model": settings.CLAUDE_MODEL}
+            result["generation"] = {"ok": True, "reply": reply, "model": settings.LLM_MODEL}
         except LLMError as e:
-            result["claude"] = {"ok": False, "error": str(e), "model": settings.CLAUDE_MODEL}
+            result["generation"] = {"ok": False, "error": str(e), "model": settings.LLM_MODEL}
         except Exception as e:
-            result["claude"] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
+            result["generation"] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
 
-    # Flatten Claude result to top level so frontend can read ok/model/reply/error directly
-    claude = result.get("claude", {})
-    result["ok"]    = claude.get("ok", False)
-    result["model"] = claude.get("model", settings.CLAUDE_MODEL)
-    result["reply"] = claude.get("reply")
-    result["error"] = claude.get("error")
+    # Flatten to top level so frontend can read ok/model/reply/error directly
+    gen = result.get("generation", {})
+    result["ok"]    = gen.get("ok", False)
+    result["model"] = gen.get("model", settings.LLM_MODEL)
+    result["reply"] = gen.get("reply")
+    result["error"] = gen.get("error")
     return result
 
 
