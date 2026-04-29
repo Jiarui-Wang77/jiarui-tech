@@ -468,8 +468,8 @@ async def process_url_ping(_: User = Depends(get_current_admin)):
         from app.core.config import settings
         return {
             "ok": True,
-            "claude_key_set": bool(settings.CLAUDE_API_KEY),
-            "claude_model": settings.CLAUDE_MODEL,
+            "qwen_key_set": bool(settings.QWEN_API_KEY),
+            "qwen_model": settings.QWEN_MODEL,
         }
     except BaseException as e:
         return {"ok": False, "error": f"{type(e).__name__}: {e}", "tb": traceback.format_exc()}

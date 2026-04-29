@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     # Anthropic Claude — used for AI post generation (complete_chat)
     # Qwen (DashScope) — used for AI post generation & article processing
     QWEN_API_KEY: str = ""
-    QWEN_MODEL: str = "qwen3-plus"          # DashScope model ID for Qwen3 Plus
+    QWEN_MODEL: str = "qwen3.6-plus"        # DashScope model ID for Qwen3.6 Plus
 
     @property
     def allowed_origins_list(self) -> list[str]:

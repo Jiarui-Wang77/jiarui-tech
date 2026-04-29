@@ -129,7 +129,7 @@ async def stream_chat_completion(
 # ═══════════════════════════════════════════════════════════════════════════════
 #  PROVIDER 2 — Qwen (DashScope, OpenAI-compatible)
 #  Used for: AI post generation & article URL processing
-#  Model: Qwen3-Plus  |  Base URL: dashscope.aliyuncs.com/compatible-mode/v1
+#  Model: Qwen3.6-Plus  |  Base URL: dashscope.aliyuncs.com/compatible-mode/v1
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _QWEN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
@@ -156,7 +156,7 @@ async def complete_chat(
         "temperature":     temperature,
         "max_tokens":      max_tokens,
         "stream":          False,
-        "enable_thinking": False,   # Qwen3 thinking off — faster for generation
+        "enable_thinking": False,   # Qwen3.6 thinking off — faster for generation
     }
     headers = {
         "Authorization": f"Bearer {settings.QWEN_API_KEY}",
