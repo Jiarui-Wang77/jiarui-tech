@@ -31,6 +31,7 @@ from app.models import (  # noqa: F401 — ensures models are registered
 from app.database import Base
 from app.routers import admin, ai_models, articles, auth, categories, community, juno, posts, tracker, users
 from app.services.scheduler import shutdown_scheduler, start_scheduler
+from app.utils.model_scoring import compute_overall_score
 
 
 # ── Lightweight additive migrations ────────────────────────────────────
@@ -306,6 +307,92 @@ async def _seed_admin_and_bots(session: AsyncSession) -> None:
     await session.commit()
 
 
+# ── AI Model seed data ─────────────────────────────────────────────────
+_AI_MODELS_SEED = [
+    {"slug": "gpt-5",              "name": "GPT-5",              "vendor": "OpenAI",    "brand_color": "#10a37f", "context_window": 400000, "price_input_per_1m": 2.5,  "price_output_per_1m": 10.0, "official_url": "https://openai.com",          "sort_order": 100,
+     "description_zh": "OpenAI 新一代旗舰模型，原生多模态 + 超长上下文，推理能力领先。",
+     "description_en": "OpenAI's flagship — native multimodal, ultra-long context, leading reasoning.",
+     "scores": [{"domain":"coding","score":96},{"domain":"academic","score":94},{"domain":"office","score":93},{"domain":"lifestyle","score":88}]},
+    {"slug": "claude-sonnet-4-6",  "name": "Claude Sonnet 4.6", "vendor": "Anthropic", "brand_color": "#cc785c", "context_window": 500000, "price_input_per_1m": 3.0,  "price_output_per_1m": 15.0, "official_url": "https://anthropic.com",        "sort_order": 95,
+     "description_zh": "Anthropic 安全对齐旗舰，代码与学术能力业内顶尖，长文档处理出色。",
+     "description_en": "Anthropic's safe & aligned flagship — best-in-class code & academic, long-doc mastery.",
+     "scores": [{"domain":"coding","score":95},{"domain":"academic","score":96},{"domain":"office","score":94},{"domain":"lifestyle","score":89}]},
+    {"slug": "gemini-ultra-2",     "name": "Gemini Ultra 2",    "vendor": "Google",    "brand_color": "#4285f4", "context_window": 2000000,"price_input_per_1m": 1.25, "price_output_per_1m": 5.0,  "official_url": "https://gemini.google.com",   "sort_order": 90,
+     "description_zh": "Google 超大规模多模态模型，原生支持视频，推理链路强劲。",
+     "description_en": "Google's multimodal powerhouse — native video, powerful reasoning chains.",
+     "scores": [{"domain":"coding","score":91},{"domain":"academic","score":93},{"domain":"office","score":90},{"domain":"lifestyle","score":85}]},
+    {"slug": "grok-4",             "name": "Grok 4",             "vendor": "xAI",       "brand_color": "#1d9bf0", "context_window": 256000, "price_input_per_1m": 5.0,  "price_output_per_1m": 15.0, "official_url": "https://x.ai",                "sort_order": 80,
+     "description_zh": "xAI 实时数据模型，接入 X 平台信息流，幽默感与时效性拉满。",
+     "description_en": "xAI's real-time model wired to X — unmatched currency & personality.",
+     "scores": [{"domain":"coding","score":87},{"domain":"academic","score":82},{"domain":"office","score":85},{"domain":"lifestyle","score":84}]},
+    {"slug": "deepseek-v3",        "name": "DeepSeek V3",        "vendor": "DeepSeek",  "brand_color": "#1e40af", "context_window": 128000, "price_input_per_1m": 0.27, "price_output_per_1m": 1.10, "official_url": "https://deepseek.com",         "sort_order": 65,
+     "description_zh": "深度求索 V3，671B 专家混合模型，代码与数学推理惊艳，极致性价比。",
+     "description_en": "DeepSeek V3 — 671B MoE with stellar coding & math, unbeatable price-performance.",
+     "scores": [{"domain":"coding","score":89},{"domain":"academic","score":85},{"domain":"office","score":80},{"domain":"lifestyle","score":75}]},
+    {"slug": "llama-3-3",          "name": "Llama 3.3",          "vendor": "Meta",      "brand_color": "#7c3aed", "context_window": 128000, "price_input_per_1m": None, "price_output_per_1m": None, "official_url": "https://llama.meta.com",       "sort_order": 70,
+     "description_zh": "Meta 开源权重旗舰，405B 参数版本性能接近闭源顶级，可自托管。",
+     "description_en": "Meta's open-weight flagship — 405B variant rivals closed-source, self-hostable.",
+     "scores": [{"domain":"coding","score":82},{"domain":"academic","score":84},{"domain":"office","score":81},{"domain":"lifestyle","score":80}]},
+    {"slug": "qwen-3",             "name": "Qwen 3",             "vendor": "Alibaba",   "brand_color": "#615cff", "context_window": 256000, "price_input_per_1m": 0.5,  "price_output_per_1m": 2.0,  "official_url": "https://tongyi.aliyun.com",   "sort_order": 55,
+     "description_zh": "阿里通义千问 3 代，中文原生最强，多模态完整，开源生态繁荣。",
+     "description_en": "Alibaba's Qwen 3 — best-in-class Chinese, full multimodal, thriving OSS ecosystem.",
+     "scores": [{"domain":"coding","score":86},{"domain":"academic","score":83},{"domain":"office","score":82},{"domain":"lifestyle","score":76}]},
+    {"slug": "mistral-large-3",    "name": "Mistral Large 3",    "vendor": "Mistral",   "brand_color": "#f59e0b", "context_window": 128000, "price_input_per_1m": 2.0,  "price_output_per_1m": 6.0,  "official_url": "https://mistral.ai",          "sort_order": 60,
+     "description_zh": "法国 Mistral AI 欧洲旗舰，推理性价比出色，合规友好。",
+     "description_en": "France's Mistral AI — strong reasoning, excellent value, GDPR-friendly.",
+     "scores": [{"domain":"coding","score":79},{"domain":"academic","score":80},{"domain":"office","score":83},{"domain":"lifestyle","score":78}]},
+]
+
+# ── Tracker repo placeholders ──────────────────────────────────────────
+_TRACKER_REPOS = [
+    "ggerganov/llama.cpp", "vllm-project/vllm", "huggingface/transformers",
+    "pytorch/pytorch", "openai/openai-python", "langchain-ai/langchain",
+    "run-llama/llama_index", "microsoft/autogen", "crewAIInc/crewAI",
+    "chroma-core/chroma", "qdrant/qdrant", "continuedev/continue",
+    "cline/cline", "All-Hands-AI/OpenHands", "vercel/ai",
+    "lobehub/lobe-chat", "hiyouga/LLaMA-Factory", "unslothai/unsloth",
+    "deepseek-ai/DeepSeek-V3", "QwenLM/Qwen2.5",
+]
+
+
+async def _seed_ai_models(session: AsyncSession) -> None:
+    """Idempotent: seed AI model leaderboard data if not already present."""
+    for m in _AI_MODELS_SEED:
+        exists = (await session.execute(select(AIModel).where(AIModel.slug == m["slug"]))).scalar_one_or_none()
+        if exists:
+            continue
+        scores_data = m.pop("scores")
+        model = AIModel(**m)
+        session.add(model)
+        await session.flush()
+        score_map: dict[str, float] = {}
+        for s in scores_data:
+            session.add(ModelScore(model_id=model.id, domain=s["domain"], score=s["score"], breakdown={}))
+            score_map[s["domain"]] = float(s["score"])
+        model.overall_score = compute_overall_score(scores_by_domain=score_map, community_rating=0.0, votes_count=0)
+        m["scores"] = scores_data  # restore for idempotency if called again
+    await session.commit()
+
+
+async def _seed_tracker_repos(session: AsyncSession) -> None:
+    """Idempotent: add placeholder tracker rows — admin syncs via GitHub later."""
+    from datetime import datetime, timezone
+    for full_name in _TRACKER_REPOS:
+        exists = (await session.execute(select(Repository).where(Repository.full_name == full_name))).scalar_one_or_none()
+        if not exists:
+            owner, name = full_name.split("/", 1)
+            session.add(Repository(
+                full_name=full_name, owner=owner, name=name,
+                html_url=f"https://github.com/{full_name}",
+                stars_count=0, forks_count=0, open_issues_count=0,
+                watchers_count=0, stars_24h=0, stars_7d=0,
+                horse_score=0.0, is_tracked=True,
+                first_seen_at=datetime.now(timezone.utc),
+                last_synced_at=datetime.now(timezone.utc),
+            ))
+    await session.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
@@ -318,9 +405,11 @@ async def lifespan(app: FastAPI):
     Path(settings.UPLOAD_DIR + "/community").mkdir(parents=True, exist_ok=True)
     Path(settings.UPLOAD_DIR + "/avatars").mkdir(parents=True, exist_ok=True)
 
-    # Seed admin account + AI bots
+    # Seed admin account + AI bots + AI models + tracker repos
     async with AsyncSessionLocal() as session:
         await _seed_admin_and_bots(session)
+        await _seed_ai_models(session)
+        await _seed_tracker_repos(session)
 
     # Start the background scheduler (GitHub sync every 24h by default)
     start_scheduler()
