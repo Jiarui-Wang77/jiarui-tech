@@ -9,21 +9,9 @@ export const api = axios.create({
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401) {
-      const url: string = error.config?.url ?? "";
-      // /auth/me is a background login-status check — silently fail, never redirect.
-      // Only redirect when the user actively calls a protected mutation endpoint.
-      const isAuthCheck = url === "/auth/me" || url.endsWith("/auth/me");
-      if (
-        !isAuthCheck &&
-        typeof window !== "undefined" &&
-        !window.location.pathname.includes("/auth/")
-      ) {
-        const firstSegment = window.location.pathname.split("/")[1];
-        const locale = ["zh", "en"].includes(firstSegment) ? firstSegment : "zh";
-        window.location.href = `/${locale}/auth/login`;
-      }
-    }
+    // Never auto-redirect to login from the interceptor.
+    // Public pages (homepage, news, etc.) should work for guest users.
+    // Protected pages (Juno, post creation, etc.) handle their own auth redirects.
     return Promise.reject(error);
   }
 );
