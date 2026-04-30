@@ -6,13 +6,56 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// ── Token auto-refresh interceptor ─────────────────────────────────────────
+// On 401: if it's an auth endpoint (me/login/refresh) → reject silently.
+// Otherwise → try POST /auth/refresh, then retry the original request.
+// If refresh also fails → reject silently (no forced redirect anywhere).
+
+let _isRefreshing = false;
+let _queue: Array<{ resolve: () => void; reject: (e: unknown) => void }> = [];
+
+const _flushQueue = (err: unknown) => {
+  _queue.forEach(({ resolve, reject }) => (err ? reject(err) : resolve()));
+  _queue = [];
+};
+
 api.interceptors.response.use(
   (res) => res,
-  (error) => {
-    // Never auto-redirect to login from the interceptor.
-    // Public pages (homepage, news, etc.) should work for guest users.
-    // Protected pages (Juno, post creation, etc.) handle their own auth redirects.
-    return Promise.reject(error);
+  async (error) => {
+    if (error.response?.status !== 401) return Promise.reject(error);
+
+    const url: string = error.config?.url ?? "";
+    const isAuthEndpoint = url.includes("/auth/");
+    const alreadyRetried = error.config?._retry;
+
+    // Auth endpoints (me, login, refresh) → reject silently, never redirect
+    if (isAuthEndpoint || alreadyRetried) {
+      return Promise.reject(error);
+    }
+
+    // Queue concurrent requests while refresh is in progress
+    if (_isRefreshing) {
+      return new Promise((resolve, reject) => {
+        _queue.push({
+          resolve: () => resolve(api({ ...error.config, _retry: true })),
+          reject,
+        });
+      });
+    }
+
+    error.config._retry = true;
+    _isRefreshing = true;
+
+    try {
+      await api.post("/auth/refresh");
+      _flushQueue(null);
+      return api(error.config);
+    } catch (refreshError) {
+      _flushQueue(refreshError);
+      return Promise.reject(refreshError);
+    } finally {
+      _isRefreshing = false;
+    }
   }
 );
 
